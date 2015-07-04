@@ -87,8 +87,19 @@ void MemoryDataLayer<Dtype>::Reset(Dtype* data, Dtype* labels, int n) {
   if (this->layer_param_.has_transform_param()) {
     LOG(WARNING) << this->type() << " does not transform array data on Reset()";
   }
-  data_ = data;
-  labels_ = labels;
+  // data_ = data;
+  // labels_ = labels;
+
+  if(data_)
+      delete []data_;
+  if(labels_)
+      delete [] labels_;
+  data_ = new Dtype[n*size_];
+  labels_ = new Dtype[n];
+
+  memcpy(data_, data, sizeof(Dtype)*n*size_);
+  memcpy(labels_, labels, sizeof(Dtype) * n);
+
   n_ = n;
   pos_ = 0;
 }
