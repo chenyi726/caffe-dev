@@ -269,7 +269,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 137 (last added: reduction_param)
+// LayerParameter next available layer-specific ID: 140 (last added: reduction_param)
 message LayerParameter {
   optional string name = 1; // the layer name
   optional string type = 2; // the layer type
@@ -351,6 +351,9 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional WindowDataParameter window_data_param = 129;
+  optional TripletLossParameter triplet_loss_param = 137;
+  optional NormalizationParameter normalization_param = 138;
+  optional SetLossParameter set_loss_param = 139;
 }
 
 // Message that stores parameters used to apply transformation
@@ -1106,4 +1109,30 @@ message PReLUParameter {
   optional FillerParameter filler = 1;
   // Whether or not slope paramters are shared across channels.
   optional bool channel_shared = 2 [default = false];
+}
+
+message TripletLossParameter {
+  optional float margin = 1 [default = 1];
+  optional int32 group_size = 2 [default = 3];
+  optional float scale = 3 [default = 1];
+  // optional int32 pos_num = 3 [default = 1];
+  // optional int32 neg_num = 4 [default = 1];
+}
+
+message SetLossParameter {
+  optional float margin = 1 [default = 1];
+  optional int32 group_size = 2 [default = 3];
+  optional float scale = 3 [default = 1];
+  // optional int32 pos_num = 3 [default = 1];
+  // optional int32 neg_num = 4 [default = 1];
+}
+
+// add normalization param
+message NormalizationParameter {
+    enum Norm {
+        L1 = 1;
+        L2 = 2;
+    }
+    // Specify the Norm to use L1 or L2
+    optional Norm norm = 1 [default = L2];
 }

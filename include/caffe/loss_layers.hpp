@@ -763,6 +763,84 @@ class SoftmaxWithLossLayer : public LossLayer<Dtype> {
   int softmax_axis_, outer_num_, inner_num_;
 };
 
+template <typename Dtype>
+class TripletLossLayer : public LossLayer<Dtype> {
+    public:
+        explicit TripletLossLayer(const LayerParameter& param)
+            : LossLayer<Dtype>(param) {}
+        virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+                const vector<Blob<Dtype>*>& top);
+        virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+                const vector<Blob<Dtype>*>& top);
+
+        virtual inline const char* type() const { return "TripletLoss"; }
+        virtual inline int ExactNumTopBlobs() const { return 1; }
+        virtual inline int ExactNumBottomBlobs() const { return 2; }
+
+    protected:
+        virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+                const vector<Blob<Dtype>*>& top);
+        virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+                const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+
+        // probe id and gallery ids
+        std::vector<std::vector<int> > pos_ids, neg_ids;
+        std::vector<std::pair<int, int> > pn_ids;
+        Dtype margin;
+        Dtype scale;
+        int N;
+        int group_num;
+        int feat_len;
+
+        Blob<Dtype> diff_;
+        // Blob<Dtype> diff_sq_;
+        Blob<Dtype> dist_sq_;
+
+        Blob<Dtype> diff_ap_;
+        Blob<Dtype> diff_an_;
+        Blob<Dtype> diff_pn_;
+        // Blob<Dtype> diff_ap_sq_;
+        // Blob<Dtype> diff_an_sq_;
+        Blob<Dtype> dist_ap_sq_;
+        Blob<Dtype> dist_an_sq_;
+        int max_dist_id;
+};
+
+template <typename Dtype>
+class SetLossLayer : public LossLayer<Dtype> {
+    public:
+        explicit SetLossLayer(const LayerParameter& param)
+            : LossLayer<Dtype>(param) {}
+        virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+                const vector<Blob<Dtype>*>& top);
+        virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+                const vector<Blob<Dtype>*>& top);
+
+        virtual inline const char* type() const { return "SetLoss"; }
+        virtual inline int ExactNumTopBlobs() const { return 1; }
+        virtual inline int ExactNumBottomBlobs() const { return 2; }
+
+    protected:
+        virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+                const vector<Blob<Dtype>*>& top);
+        virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+                const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+
+        // probe id and gallery ids
+        std::vector<std::vector<int> > pos_ids, neg_ids;
+        std::vector<int> hard_neg_id;
+        std::vector<bool> pos_backward;
+        Dtype margin;
+        Dtype scale;
+        int N;
+        int group_num;
+        int feat_len;
+
+        /* center of all positive samples */
+        Blob<Dtype> pos_center_;
+        Blob<Dtype> diff_;
+        Blob<Dtype> dist_sq_;
+};
 }  // namespace caffe
 
 #endif  // CAFFE_LOSS_LAYERS_HPP_
