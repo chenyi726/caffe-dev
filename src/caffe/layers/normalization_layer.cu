@@ -18,6 +18,7 @@ namespace caffe {
 template <typename Dtype>
 void NormalizationLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
+  Dtype val = this->layer_param_.normalization_param().val();
   const Dtype* bottom_data = bottom[0]->gpu_data();
   Dtype* top_data = top[0]->mutable_gpu_data();
   Dtype* squared_data = squared_.mutable_gpu_data();
@@ -27,7 +28,7 @@ void NormalizationLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   caffe_gpu_powx(n*d, bottom_data, Dtype(2), squared_data);
   for (int i=0; i<n; ++i) {
     caffe_gpu_asum<Dtype>(d, squared_data+i*d, &normsqr);
-    caffe_gpu_scale<Dtype>(d, pow(normsqr, -0.5), bottom_data+i*d, top_data+i*d);
+    caffe_gpu_scale<Dtype>(d, val*pow(normsqr, -0.5), bottom_data+i*d, top_data+i*d);
   }
 /*
   const Dtype* out = top[0]->cpu_data();
@@ -48,6 +49,7 @@ void NormalizationLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void NormalizationLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+  Dtype val = this->layer_param_.normalization_param().val();
   const Dtype* top_diff = top[0]->gpu_diff();
   const Dtype* top_data = top[0]->gpu_data();
   const Dtype* bottom_data = bottom[0]->gpu_data();
@@ -60,7 +62,7 @@ void NormalizationLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     caffe_gpu_scale(d, a, top_data+i*d, bottom_diff+i*d);
     caffe_gpu_sub(d, top_diff+i*d, bottom_diff+i*d, bottom_diff+i*d);
     caffe_gpu_dot(d, bottom_data+i*d, bottom_data+i*d, &a);
-    caffe_gpu_scale(d, Dtype(pow(a, -0.5)), bottom_diff+i*d, bottom_diff+i*d);
+    caffe_gpu_scale(d, val*Dtype(pow(a, -0.5)), bottom_diff+i*d, bottom_diff+i*d);
   }
 /*
 const Dtype* b = bottom[0]->cpu_data();

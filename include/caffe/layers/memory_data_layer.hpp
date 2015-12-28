@@ -20,13 +20,13 @@ template <typename Dtype>
 class MemoryDataLayer : public BaseDataLayer<Dtype> {
  public:
   explicit MemoryDataLayer(const LayerParameter& param)
-      : BaseDataLayer<Dtype>(param), has_new_data_(false) {}
+      : BaseDataLayer<Dtype>(param), has_new_data_(false), num_tasks_(param.memory_data_param().num_tasks()) {}
   virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
   virtual inline const char* type() const { return "MemoryData"; }
   virtual inline int ExactNumBottomBlobs() const { return 0; }
-  virtual inline int ExactNumTopBlobs() const { return 2; }
+  virtual inline int ExactNumTopBlobs() const { return 1+num_tasks_; }
 
   virtual void AddDatumVector(const vector<Datum>& datum_vector);
 #ifdef USE_OPENCV
@@ -56,6 +56,7 @@ class MemoryDataLayer : public BaseDataLayer<Dtype> {
   Blob<Dtype> added_data_;
   Blob<Dtype> added_label_;
   bool has_new_data_;
+  int num_tasks_;
 };
 
 }  // namespace caffe

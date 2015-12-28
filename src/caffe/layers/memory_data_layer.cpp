@@ -12,6 +12,7 @@ template <typename Dtype>
 void MemoryDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
      const vector<Blob<Dtype>*>& top) {
   batch_size_ = this->layer_param_.memory_data_param().batch_size();
+  num_tasks_ = this->layer_param_.memory_data_param().num_tasks();
   channels_ = this->layer_param_.memory_data_param().channels();
   height_ = this->layer_param_.memory_data_param().height();
   width_ = this->layer_param_.memory_data_param().width();
@@ -97,10 +98,10 @@ void MemoryDataLayer<Dtype>::Reset(Dtype* data, Dtype* labels, int n) {
   if(labels_)
       delete [] labels_;
   data_ = new Dtype[n*size_];
-  labels_ = new Dtype[n];
+  labels_ = new Dtype[n * num_tasks_];
 
   memcpy(data_, data, sizeof(Dtype)*n*size_);
-  memcpy(labels_, labels, sizeof(Dtype) * n);
+  memcpy(labels_, labels, sizeof(Dtype) * n * num_tasks_);
 
   n_ = n;
   pos_ = 0;
@@ -120,9 +121,11 @@ void MemoryDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   CHECK(data_) << "MemoryDataLayer needs to be initalized by calling Reset";
   top[0]->Reshape(batch_size_, channels_, height_, width_);
-  top[1]->Reshape(batch_size_, 1, 1, 1);
   top[0]->set_cpu_data(data_ + pos_ * size_);
-  top[1]->set_cpu_data(labels_ + pos_);
+  for(size_t i=0; i<num_tasks_; ++i) {
+    top[1+i]->Reshape(batch_size_, 1, 1, 1);
+    top[1+i]->set_cpu_data(labels_ + pos_ + i * n_);
+  }
   pos_ = (pos_ + batch_size_) % n_;
   if (pos_ == 0)
     has_new_data_ = false;

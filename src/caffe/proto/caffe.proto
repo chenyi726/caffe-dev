@@ -778,6 +778,7 @@ message MemoryDataParameter {
   optional uint32 channels = 2;
   optional uint32 height = 3;
   optional uint32 width = 4;
+  optional uint32 num_tasks = 5 [default = 1];
 }
 
 message MVNParameter {
@@ -1278,4 +1279,5 @@ message NormalizationParameter {
     }
     // Specify the Norm to use L1 or L2
     optional Norm norm = 1 [default = L2];
+    optional float val = 2 [default = 1];
 }

@@ -33,6 +33,7 @@ void NormalizationLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void NormalizationLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
+  Dtype val = this->layer_param_.normalization_param().val();
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
   Dtype* squared_data = squared_.mutable_cpu_data();
@@ -41,13 +42,14 @@ void NormalizationLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   caffe_sqr<Dtype>(n*d, bottom_data, squared_data);
   for (int i=0; i<n; ++i) {
     Dtype normsqr = caffe_cpu_asum<Dtype>(d, squared_data+i*d);
-    caffe_cpu_scale<Dtype>(d, pow(normsqr, -0.5), bottom_data+i*d, top_data+i*d);
+    caffe_cpu_scale<Dtype>(d, val*pow(normsqr, -0.5), bottom_data+i*d, top_data+i*d);
   }
 }
 
 template <typename Dtype>
 void NormalizationLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+  Dtype val = this->layer_param_.normalization_param().val();
   const Dtype* top_diff = top[0]->cpu_diff();
   const Dtype* top_data = top[0]->cpu_data();
   const Dtype* bottom_data = bottom[0]->cpu_data();
@@ -59,7 +61,7 @@ void NormalizationLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     caffe_cpu_scale(d, a, top_data+i*d, bottom_diff+i*d);
     caffe_sub(d, top_diff+i*d, bottom_diff+i*d, bottom_diff+i*d);
     a = caffe_cpu_dot(d, bottom_data+i*d, bottom_data+i*d);
-    caffe_cpu_scale(d, Dtype(pow(a, -0.5)), bottom_diff+i*d, bottom_diff+i*d);
+    caffe_cpu_scale(d, val*Dtype(pow(a, -0.5)), bottom_diff+i*d, bottom_diff+i*d);
   }
 }
 
