@@ -22,7 +22,7 @@ void MemoryDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
       " positive in memory_data_param";
   vector<int> label_shape(1, batch_size_);
   top[0]->Reshape(batch_size_, channels_, height_, width_);
-  top[1]->Reshape(label_shape);
+  for(size_t i=0; i<num_tasks_; ++i) top[1+i]->Reshape(label_shape);
   added_data_.Reshape(batch_size_, channels_, height_, width_);
   added_label_.Reshape(label_shape);
   data_ = NULL;

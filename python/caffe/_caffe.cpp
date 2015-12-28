@@ -63,6 +63,8 @@ void CheckContiguousArray(PyArrayObject* arr, string name,
     throw std::runtime_error(name + " must be float32");
   }
   if (PyArray_DIMS(arr)[1] != channels) {
+    std::stringstream ss;
+    ss << "channels of arr: " << PyArray_DIMS(arr)[1] << std::endl << "channels of layer: " << channels << std::endl;
     throw std::runtime_error(name + " has wrong number of channels");
   }
   if (PyArray_DIMS(arr)[2] != height) {
@@ -116,12 +118,15 @@ void Net_SetInputArrays(Net<Dtype>* net, bp::object data_obj,
       reinterpret_cast<PyArrayObject*>(data_obj.ptr());
   PyArrayObject* labels_arr =
       reinterpret_cast<PyArrayObject*>(labels_obj.ptr());
-  CheckContiguousArray(data_arr, "data array", md_layer->channels(),
-      md_layer->height(), md_layer->width());
-  CheckContiguousArray(labels_arr, "labels array", 1, 1, 1);
-  if (PyArray_DIMS(data_arr)[0] != PyArray_DIMS(labels_arr)[0]) {
-    throw std::runtime_error("data and labels must have the same first"
-        " dimension");
+  // CheckContiguousArray(data_arr, "data array", md_layer->channels(),
+      // md_layer->height(), md_layer->width());
+  // CheckContiguousArray(labels_arr, "labels array", 1, 1, 1);
+  int labels_count = 1;
+  for(int i=0; i<PyArray_NDIM(labels_arr); ++i)
+      labels_count *= PyArray_DIMS(labels_arr)[i];
+  if (PyArray_DIMS(data_arr)[0]*md_layer->num_tasks() != labels_count) {
+    std::cout << PyArray_DIMS(data_arr)[0] << ", " << md_layer->num_tasks() << ", " << labels_count << std::endl;
+    throw std::runtime_error("data.shape[0]*num_tasks != labels.size(): ");
   }
   if (PyArray_DIMS(data_arr)[0] % md_layer->batch_size() != 0) {
     throw std::runtime_error("first dimensions of input arrays must be a"
