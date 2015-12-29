@@ -1267,6 +1267,7 @@ message SetLossParameter {
   optional float margin = 1 [default = 1];
   optional int32 group_size = 2 [default = 3];
   optional float scale = 3 [default = 1];
+  optional bool log_flag = 4 [default = false];
   // optional int32 pos_num = 3 [default = 1];
   // optional int32 neg_num = 4 [default = 1];
 }

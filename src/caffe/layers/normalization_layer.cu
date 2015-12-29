@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cfloat>
 #include <vector>
+#include <iostream>
 
 // #include "thrust/device_vector.h"
 #include "caffe/util/io.hpp"
@@ -28,6 +29,7 @@ void NormalizationLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   caffe_gpu_powx(n*d, bottom_data, Dtype(2), squared_data);
   for (int i=0; i<n; ++i) {
     caffe_gpu_asum<Dtype>(d, squared_data+i*d, &normsqr);
+    CHECK_GE(normsqr, 0);
     caffe_gpu_scale<Dtype>(d, val*pow(normsqr, -0.5), bottom_data+i*d, top_data+i*d);
   }
 /*

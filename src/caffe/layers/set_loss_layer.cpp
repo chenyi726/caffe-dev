@@ -16,6 +16,7 @@ void SetLossLayer<Dtype>::LayerSetUp(
   N = this->layer_param_.set_loss_param().group_size();
   margin = this->layer_param_.set_loss_param().margin();
   scale = this->layer_param_.set_loss_param().scale();
+  log_flag = this->layer_param_.set_loss_param().log_flag();
   LOG(INFO) << "Set loss scale is " << scale;
   // batch size must be multiple times of N
   CHECK_EQ(bottom[0]->num()%N, 0);
@@ -94,7 +95,8 @@ void SetLossLayer<Dtype>::Forward_cpu(
             if(scale!=1)
                 caffe_cpu_scale(feat_len, scale, diff_ptr_+feat_len*(i*N+j), diff_ptr_+feat_len*(i*N+j));
             Dtype d = caffe_cpu_dot(feat_len, diff_ptr_+feat_len*(i*N+j), diff_ptr_+feat_len*(i*N+j));
-            // LOG(INFO) << "i " << i <<", j " << j << ", d " << d;
+            if(log_flag)
+                LOG(INFO) << "i " << i <<", j " << j << ", d " << d;
             dist_sq_.mutable_cpu_data()[i*N+j] = d;
             if(std::count(neg_ids[i].begin(), neg_ids[i].end(), j)>0 && (neg_min==-1 || d<neg_min_val)) {
                 neg_min = j;
@@ -105,8 +107,8 @@ void SetLossLayer<Dtype>::Forward_cpu(
             if(std::count(neg_ids[i].begin(), neg_ids[i].end(), j)>0) continue;
             Dtype d = dist_sq_.cpu_data()[i*N+j];
             Dtype mdist = std::max(d+margin-neg_min_val, Dtype(0));
-            /* if(i%40==0) */
-                /* LOG(INFO) << "j=" << j << ", d=" << d << ", neg_min_val=" << neg_min_val; */
+            if(log_flag)
+                LOG(INFO) << "j=" << j << ", d=" << d << ", neg_min_val=" << neg_min_val << ", mdist=" << mdist;
             if(mdist>0) pos_backward[i*N+j] = true;
             pos_mdist += mdist;
         }
@@ -114,7 +116,8 @@ void SetLossLayer<Dtype>::Forward_cpu(
         pos_mdist /= pos_ids[i].size();
         // pos_mdist *= 2;
 
-        // LOG(INFO) << "pos_mdist " << pos_mdist << ", neg_min_val " << neg_min_val;
+        if(log_flag)
+            LOG(INFO) << "pos_mdist " << pos_mdist << ", neg_min_val " << neg_min_val;
 
         CHECK_NE(neg_min, -1);
         CHECK_GE(pos_ids[i].size(), 2);

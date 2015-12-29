@@ -293,6 +293,7 @@ def load_image(filename, color=True):
         of size (H x W x 1) in grayscale.
     """
     img = skimage.img_as_float(skimage.io.imread(filename)).astype(np.float32)
+    assert(np.linalg.norm(img)!=0)
     if img.ndim == 2:
         img = img[:, :, np.newaxis]
         if color:

@@ -41,6 +41,7 @@ class SetLossLayer : public LossLayer<Dtype> {
         int N;
         int group_num;
         int feat_len;
+        bool log_flag;
 
         /* center of all positive samples */
         Blob<Dtype> pos_center_;
