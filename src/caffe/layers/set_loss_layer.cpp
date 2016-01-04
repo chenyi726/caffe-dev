@@ -96,7 +96,7 @@ void SetLossLayer<Dtype>::Forward_cpu(
                 caffe_cpu_scale(feat_len, scale, diff_ptr_+feat_len*(i*N+j), diff_ptr_+feat_len*(i*N+j));
             Dtype d = caffe_cpu_dot(feat_len, diff_ptr_+feat_len*(i*N+j), diff_ptr_+feat_len*(i*N+j));
             if(log_flag)
-                LOG(INFO) << "i " << i <<", j " << j << ", d " << d;
+                LOG(INFO) << "i " << i << ", j " << j << ", d " << d;
             dist_sq_.mutable_cpu_data()[i*N+j] = d;
             if(std::count(neg_ids[i].begin(), neg_ids[i].end(), j)>0 && (neg_min==-1 || d<neg_min_val)) {
                 neg_min = j;
@@ -150,14 +150,17 @@ void SetLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         caffe_set(N*group_num*feat_len, Dtype(0), bottom_diff);
         for(int i=0; i<group_num; ++i) {
             if(hard_neg_id[i]>0) {
+                Dtype pos_cnt = 0;
+                for(int j=0; j<N; ++j)
+                    if(pos_backward[i*N+j]) pos_cnt += 1;
                 for(int j=0; j<N; ++j) {
                     /* if(std::count(pos_ids[i].begin(), pos_ids[i].end(), j)>0 && pos_backward[i*N+j]) */
                     if(pos_backward[i*N+j])
                         /* for positive samples */
-                        caffe_cpu_axpby(feat_len, alpha, diff_.cpu_data()+feat_len*(i*N+j), Dtype(0), bottom_diff+feat_len*(i*N+j));
+                        caffe_cpu_axpby(feat_len, scale*alpha, diff_.cpu_data()+feat_len*(i*N+j), Dtype(0), bottom_diff+feat_len*(i*N+j));
                     else if(j==hard_neg_id[i]) {
                         /* for hard negative sample */
-                        caffe_cpu_axpby(feat_len, -alpha, diff_.cpu_data()+feat_len*(i*N+j), Dtype(0), bottom_diff+feat_len*(i*N+j));
+                        caffe_cpu_axpby(feat_len, -scale*alpha*pos_cnt, diff_.cpu_data()+feat_len*(i*N+j), Dtype(0), bottom_diff+feat_len*(i*N+j));
                     }
                 }
             }
