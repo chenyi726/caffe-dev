@@ -88,6 +88,7 @@ void CoupledClusterLossLayer<Dtype>::Forward_cpu(
 
         Dtype pos_mdist = Dtype(0);
         Dtype neg_min_val = -1;
+        int neg_min_ind = -1;
         Dtype pos_max_val = -1;
         for(int j=0; j<N; ++j) {
             // f[j]-center
@@ -98,17 +99,16 @@ void CoupledClusterLossLayer<Dtype>::Forward_cpu(
             if(log_flag)
                 LOG(INFO) << "i " << i << ", j " << j << ", d " << d;
             dist_sq_.mutable_cpu_data()[i*N+j] = d;
-            if(std::count(neg_ids[i].begin(), neg_ids[i].end(), j)>0 && (neg_min_val==-1 || d<neg_min_val)) neg_min_val = d;
+            if(std::count(neg_ids[i].begin(), neg_ids[i].end(), j)>0 && (neg_min_val==-1 || d<neg_min_val)) {
+                neg_min_val = d;
+                neg_min_ind = i*N+j;
+            }
             else if(std::count(neg_ids[i].begin(), neg_ids[i].end(), j)==0 && (pos_max_val==-1 || d>pos_max_val)) pos_max_val = d;
         }
+        neg_backward[neg_min_ind] = true;
         for(int j=0; j<N; ++j) {
-            if(std::count(neg_ids[i].begin(), neg_ids[i].end(), j)>0) {
-                Dtype d = dist_sq_.cpu_data()[i*N+j];
-                Dtype mdist = std::max(d+margin-pos_max_val, Dtype(0));
-                if(log_flag)
-                    LOG(INFO) << "j=" << j << ", d=" << d << ", pos_max_val=" << pos_max_val << ", mdist=" << mdist;
-                if(mdist<0) neg_backward[i*N+j] = true;
-            }
+            if(std::count(neg_ids[i].begin(), neg_ids[i].end(), j)>0)
+                continue;
             else {
                 Dtype d = dist_sq_.cpu_data()[i*N+j];
                 Dtype mdist = std::max(d+margin-neg_min_val, Dtype(0));
